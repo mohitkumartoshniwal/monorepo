@@ -1,58 +1,104 @@
+## The commands and code used throughout the video:
+
+```sh
 npm install -g pnpm
+```
 
+```sh
 pnpm init
+```
 
+```sh
 git init
+```
 
+### Setup Prettier
+
+```sh
 pnpm add -D prettier
+```
 
-Create .prettierignore
+Create **.prettierignore** with the below contents:
+
+```
 coverage
 public
 dist
 pnpm-lock.yaml
 pnpm-workspace.yaml
-
-Create.prettierrc
-
 ```
+
+Create **.prettierrc** with the below contents:
+
+```js
 {
   "semi": true,
   "singleQuote": true
 }
 ```
 
-VSCODE extension
-mkdir .vscode && touch .vscode/settings.json
+### Setup VSCODE
 
+Create workspace settings:
+
+```sh
+mkdir .vscode && touch .vscode/settings.json
 ```
+
+Add below contents inside settings.json
+
+```json
 {
   "editor.formatOnSave": true,
   "editor.defaultFormatter": "esbenp.prettier-vscode"
 }
 ```
 
-pnpm create @eslint/config
+### Setup ESLint
 
-pnpm add -D eslint-config-prettier eslint-plugin-prettier
+```sh
+pnpm create @eslint/config
+```
+
+Create **.eslintignore** with the below contents:
 
 ```
+coverage
+public
+dist
+pnpm-lock.yaml
+pnpm-workspace.yaml
+```
+
+### Integrating ESLint with Prettier
+
+Add below plugins so that both Prettier and Eslint can do both of their jobs without getting in ecah other ways
+
+```sh
+pnpm add -D eslint-config-prettier eslint-plugin-prettier
+```
+
+```js
 module.exports = {
   extends: [..., 'plugin:prettier/recommended'],
 }
 ```
 
-```
+```sh
 npm pkg set scripts.lint="eslint ."
 npm pkg set scripts.format="prettier --write ."
+```
 
+### Pre-commit hooks
+
+```sh
 pnpm add --save-dev husky lint-staged
 pnpm exec husky install
 npm pkg set scripts.prepare="husky install"
 pnpm exec husky add .husky/pre-commit "pnpm exec lint-staged"
 ```
 
-```
+```json
 "lint-staged": {
     "**/*.{js,ts,tsx}": [
       "eslint --fix"
@@ -61,75 +107,77 @@ pnpm exec husky add .husky/pre-commit "pnpm exec lint-staged"
   }
 ```
 
-touch pnpm-workspace.yaml
+### Setup workspace
 
+```sh
+touch pnpm-workspace.yaml
 ```
+
+```yml
 packages:
   - 'apps/*'
   - 'libs/*'
 ```
 
-```
+```sh
 mkdir apps libs
 ```
 
-```
-pnpm create vite utils
+### Setup common package - utils
+
+```sh
+pnpm create vite utils --template vanilla-ts
+cd utils/
 pnpm install
+npm pkg set scripts.dev="pnpm run build --watch"
+```
 
-dev:"pnpm run build --watch" (so that any change in the code will rebuild automatically and reflect in the 'web-app' in real-time.)
+Remove unnecessary files
 
-pnpm add -D vite-plugin-dts
+And add below contents in **main.ts** file
 
-import dts from 'vite-plugin-dts'
-
-// https://vitejs.dev/config/
-export default defineConfig({
-  build: { lib: { entry: resolve(__dirname, 'src/main.ts'), name:'utils' } },
-  plugins: [dts()],
-})
-
-//main.ts
+```js
 export const isEmpty = (data: unknown) => {
-  if (data === null || data === undefined) {
-    return 'It is Empty';
-  }
-  return 'It is not Empty';
-};
-
-//tsconfig.json
-{
-  "compilerOptions": {
-    "target": "ES2020",
-    "useDefineForClassFields": true,
-    "module": "ESNext",
-    "lib": ["ES2020", "DOM", "DOM.Iterable"],
-    "skipLibCheck": true,
-
-    /* Bundler mode */
-    "moduleResolution": "bundler",
-    "allowImportingTsExtensions": true,
-    "resolveJsonModule": true,
-    "isolatedModules": true,
-    "noEmit": true,
-
-    /* Linting */
-    "strict": true,
-    "noUnusedLocals": true,
-    "noUnusedParameters": true,
-    "noFallthroughCasesInSwitch": true
-  },
-  "include": ["src"]
+if (data === null || data === undefined) {
+return 'It is Empty';
 }
+return 'It is not Empty';
+};
 ```
 
+#### Setup Vite Library Mode
+
+Add below package to create type definitions from the library
+
+```sh
+pnpm add -D vite-plugin-dts
 ```
-npm install -g typescript
 
-cd apps && mkdir backend
-tsc --init
+Create **vite.config.ts** file and add below contents in it
 
-//tsconfig.json
+```js
+import { defineConfig } from 'vite';
+import { resolve } from 'path';
+import dts from 'vite-plugin-dts';
+
+export default defineConfig({
+  build: { lib: { entry: resolve(__dirname, 'src/main.ts'), name: 'utils' } },
+  plugins: [dts()],
+});
+```
+
+### Setup Backend
+
+Create a module using below commands
+
+```
+pnpm init
+
+```
+
+Create **tsconfig.json** with below contents in it
+
+```json
 {
   "compilerOptions": {
     "module": "ES2020",
@@ -143,15 +191,16 @@ tsc --init
   },
   "include": ["src/**/*"]
 }
+```
 
 // nodemon.json
 {
-  "execMap": {
-    "ts": "ts-node-esm"
-  }
+"execMap": {
+"ts": "ts-node-esm"
+}
 }
 
-"utils": "workspace:*"
+"utils": "workspace:\*"
 
 // app.ts
 import express from 'express';
@@ -165,41 +214,47 @@ const app = express();
 app.use(cors());
 
 app.get('/', (req, res) => {
-  res.json({ message: utils.isEmpty({}) });
+res.json({ message: utils.isEmpty({}) });
 });
 
 app.listen(PORT, () => {
-  console.log(`Server running on PORT ${PORT}`);
+console.log(`Server running on PORT ${PORT}`);
 });
+
 ```
 
 ```
+
 // Vue and React
- "utils": "workspace:*"
+"utils": "workspace:\*"
 
 // React
 import { isEmpty } from 'utils';
 
-  useEffect(() => {
-    fetch('http://localhost:5000')
-      .then((res) => res.json())
-      .then((msg) => console.log({ msg }));
-  }, []);
-
+useEffect(() => {
+fetch('http://localhost:5000')
+.then((res) => res.json())
+.then((msg) => console.log({ msg }));
+}, []);
 
 // Vue
 import { isEmpty } from 'utils';
 
 onMounted(() => {
-  fetch('http://localhost:5000')
-    .then((res) => res.json())
-    .then((msg) => console.log({ msg }));
+fetch('http://localhost:5000')
+.then((res) => res.json())
+.then((msg) => console.log({ msg }));
 });
 
 <pre>{isEmpty({})}</pre>
 <pre>{isEmpty(null)}</pre>
 
-
 ```
 
 pnpm add -D eslint-plugin-prettier -w
+
+```
+
+```
+
+```
