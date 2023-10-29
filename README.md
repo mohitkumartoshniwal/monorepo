@@ -166,13 +166,26 @@ export default defineConfig({
 });
 ```
 
+Update **utils** **package.json** to have
+
+```json
+{...,
+  "main": "./dist/utils.umd.cjs",
+  "module": "./dist/utils.js",
+  "types": "./dist/main.d.ts",
+}
+```
+
 ### Setup Backend
 
-Create a module using below commands
+Create a **backend** package using below commands
 
-```
+```sh
+cd apps/
+mkdir backend
+cd backend
 pnpm init
-
+npm pkg set type="module"
 ```
 
 Create **tsconfig.json** with below contents in it
@@ -193,16 +206,33 @@ Create **tsconfig.json** with below contents in it
 }
 ```
 
-// nodemon.json
+Create **nodemon.json** with below contents in it
+
+```json
 {
-"execMap": {
-"ts": "ts-node-esm"
+  "execMap": {
+    "ts": "ts-node-esm"
+  }
 }
-}
+```
 
-"utils": "workspace:\*"
+Since our **backend** will use the **utils** library, hence update **package.json** **dependencies** with
 
-// app.ts
+```sh
+"utils": "workspace:*"
+```
+
+and run
+
+```sh
+pnpm install
+```
+
+so that our **backend** can symlink the **utils** package present in the workspace
+
+Create an **app.ts** file in **src** directory and add below contents in it
+
+```js
 import express from 'express';
 import cors from 'cors';
 import utils from 'utils';
@@ -214,47 +244,75 @@ const app = express();
 app.use(cors());
 
 app.get('/', (req, res) => {
-res.json({ message: utils.isEmpty({}) });
+  res.json({ message: utils.isEmpty({}) });
 });
 
 app.listen(PORT, () => {
-console.log(`Server running on PORT ${PORT}`);
+  console.log(`Server running on PORT ${PORT}`);
 });
+```
+
+Create **vue-frontend** and **react-frontend** using below commands and repeat the process to add **utils** as a dependency to both of them
+
+```sh
+pnpm create vite vue-frontend --template vue-ts
+cd vue-frontend
+pnpm install
+```
+
+```sh
+pnpm create vite react-frontend --template react-ts
+cd react-frontend
+pnpm install
 
 ```
 
-```
+Now to use the **utils** library in React, update **src/App.ts** with below contents
 
-// Vue and React
-"utils": "workspace:\*"
-
-// React
+```js
 import { isEmpty } from 'utils';
-
+...
+...
 useEffect(() => {
-fetch('http://localhost:5000')
-.then((res) => res.json())
-.then((msg) => console.log({ msg }));
+  fetch('http://localhost:5000')
+    .then((res) => res.json())
+    .then((msg) => console.log({ msg }));
 }, []);
+....
+....
+return(
+...
+<pre>{isEmpty('abc')}</pre>
+<pre>{isEmpty(null)}</pre>
+</>
+)
+```
 
-// Vue
+And similarly for Vue, update **src/App.vue** with below contents
+
+```js
+import { onMounted } from 'vue';
 import { isEmpty } from 'utils';
-
+...
+...
 onMounted(() => {
-fetch('http://localhost:5000')
-.then((res) => res.json())
-.then((msg) => console.log({ msg }));
+  fetch('http://localhost:5000')
+    .then((data) => data.json())
+    .then((data) => console.log(data));
 });
-
+....
+....
+<template>
+...
+...
 <pre>{isEmpty({})}</pre>
 <pre>{isEmpty(null)}</pre>
+</template>
 
 ```
 
+If you are facing any issue while committing code then run below command
+
+```sh
 pnpm add -D eslint-plugin-prettier -w
-
-```
-
-```
-
 ```
