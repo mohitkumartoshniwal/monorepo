@@ -1,3 +1,6 @@
+# Create your own Monorepo
+Code for the [Youtube video](https://youtu.be/pz4f9Q6VYZA) on how to create your own Monorepo using PNPM workspace, React, Vue, Node, Eslint, Prettier and Typescript
+
 ## The commands and code used throughout the video:
 
 ```sh
