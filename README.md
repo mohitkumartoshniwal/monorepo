@@ -311,7 +311,7 @@ onMounted(() => {
 
 ```
 
-If you are facing any issue while committing code then run below command
+If you are facing any issue related to eslint prettier integration while committing code then run below command
 
 ```sh
 pnpm add -D eslint-plugin-prettier -w
